@@ -15,10 +15,10 @@ def build_inverted_index(documents):
     
     return inverted_index
 
-#los documeentos estan cargados en el repositorio 
-def boolean_query_inverted_index(inverted_index, query):
+#los documeentos estan cargados en el repositorio para hacer un inverted index
+def boolean_query(inverted_index, query):
     query_terms = query.split()
-    result = None  # Inicializar el resultado
+    result_set = None
     
     for term in query_terms:
         if term == 'AND':
@@ -26,34 +26,46 @@ def boolean_query_inverted_index(inverted_index, query):
         elif term.startswith('NOT'):
             keyword = term[4:]  # Extraer la palabra clave después de 'NOT'
             if keyword in inverted_index:
-                if result is None:
-                    result = set(range(len(inverted_index)))  # Todos los documentos
-                result -= set(inverted_index[keyword])  # Excluir documentos que contienen el término
+                doc_indices = set(inverted_index[keyword])
+                if result_set is None:
+                    result_set = set(range(len(documents))) - doc_indices
+                else:
+                    result_set -= doc_indices
+            else:
+                if result_set is None:
+                    result_set = set(range(len(documents)))
         else:  # Es un término normal (AND)
             if term in inverted_index:
-                if result is None:
-                    result = set(inverted_index[term])  # Iniciar con los documentos que contienen el término
+                doc_indices = set(inverted_index[term])
+                if result_set is None:
+                    result_set = doc_indices
                 else:
-                    result &= set(inverted_index[term])  # Intersección con los documentos que contienen el término
+                    result_set &= doc_indices
+            else:
+                return set()  # Si un término no está en el índice, no hay resultados
     
-    return list(result) if result is not None else []
+    return result_set
 
 # Ejemplo de uso
 if __name__ == "__main__":
-    n = int(input("Ingrese el número de documentos: "))
-    documents = []
-    
-    for i in range(n):
-        doc_content = input(f"Ingrese el contenido del documento {i + 1}: ")
-        documents.append(doc_content)
+    documents = [
+        "el gato come pescado",
+        "el perro juega con la pelota",
+        "el gato y el perro son amigos",
+        "la casa es grande y bonita"
+    ]
     
     inverted_index = build_inverted_index(documents)
     
-    query = input("Ingrese su consulta booleana (ejemplo: palabra1 AND palabra2 AND NOT palabra3): ")
+    print("Índice Invertido:")
+    for term, doc_indices in inverted_index.items():
+        print(f"{term}: {doc_indices}")
     
-    results = boolean_query_inverted_index(inverted_index, query)
+    query = input("Ingrese su consulta booleana (ejemplo: gato AND perro AND NOT casa): ")
+    
+    results = boolean_query(inverted_index, query)
     
     print("Documentos que cumplen con la consulta:")
-    for result in results:
-        print(documents[result])  # Mostrar el contenido del documento
-
+    for doc_index in results:
+        print(documents[doc_index])
+# Este código crea un índice invertido a partir de un conjunto de documentos y permite realizar consultas booleanas sobre él.
